@@ -1,4 +1,12 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import { useDrag, useDrop } from 'react-dnd';
+import {
+  FiEdit2,
+  FiTrash2,
+  FiMoreVertical,
+  FiLink,
+  FiUpload,
+} from 'react-icons/fi';
 
 import ModuleItem from './ModuleItem';
 
@@ -9,6 +17,10 @@ const ModuleCard = ({
   items = [],
   onAddItem,
   onDeleteItem,
+  index,
+  moveModule,
+  moveItem,
+  onEditItem,
 }) => {
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -45,8 +57,50 @@ const ModuleCard = ({
     setIsAddMenuOpen(false);
   };
 
+  const ref = useRef(null);
+
+  // Drop target for modules (for reordering modules)
+  const [, dropModule] = useDrop({
+    accept: 'MODULE',
+    hover(item, monitor) {
+      if (!ref.current) return;
+      const dragIndex = item.index;
+      const hoverIndex = index;
+      if (dragIndex === hoverIndex) return;
+      moveModule(dragIndex, hoverIndex);
+      item.index = hoverIndex;
+    },
+  });
+
+  // Drop target for items (for dropping resources into empty module)
+  const [, dropResource] = useDrop({
+    accept: 'ITEM',
+    canDrop: draggedItem => draggedItem.moduleId !== module.id,
+    drop: (draggedItem, monitor) => {
+      if (items.length === 0) {
+        moveItem(draggedItem.id, null, module.id);
+      }
+    },
+  });
+
+  // Drag source for modules
+  const [{ isDragging }, drag] = useDrag({
+    type: 'MODULE',
+    item: { id: module.id, index },
+    collect: monitor => ({
+      isDragging: monitor.isDragging(),
+    }),
+  });
+
+  // Compose all refs on the same element
+  drag(dropModule(dropResource(ref)));
+
   return (
-    <div className="module-card-container">
+    <div
+      ref={ref}
+      className="module-card-container"
+      style={{ opacity: isDragging ? 0.5 : 1 }}
+    >
       <div className="module-card" onClick={toggleExpanded}>
         <div className="module-content">
           <div className="module-icon">
@@ -63,16 +117,16 @@ const ModuleCard = ({
         </div>
         <div className="module-actions">
           <button className="btn-options" onClick={toggleOptions}>
-            <span className="options-icon">⋮</span>
+            <FiMoreVertical className="options-icon" />
           </button>
           {isOptionsOpen && (
             <div className="options-menu">
               <button className="option-item" onClick={handleEdit}>
-                <span className="option-icon">✏️</span>
+                <FiEdit2 className="option-icon" />
                 Edit module name
               </button>
               <button className="option-item delete" onClick={handleDelete}>
-                <span className="option-icon">🗑️</span>
+                <FiTrash2 className="option-icon" />
                 Delete
               </button>
             </div>
@@ -96,14 +150,14 @@ const ModuleCard = ({
                       className="add-item-option"
                       onClick={() => handleAddClick('link')}
                     >
-                      <span className="item-icon">🔗</span>
+                      <FiLink className="item-icon" />
                       Add a link
                     </button>
                     <button
                       className="add-item-option"
                       onClick={() => handleAddClick('file')}
                     >
-                      <span className="item-icon">⬆️</span>
+                      <FiUpload className="item-icon" />
                       Upload file
                     </button>
                   </div>
@@ -112,15 +166,16 @@ const ModuleCard = ({
             </div>
           ) : (
             <div className="module-items">
-              <div className="module-items-list">
-                {moduleItems.map(item => (
-                  <ModuleItem
-                    key={item.id}
-                    item={item}
-                    onDelete={onDeleteItem}
-                  />
-                ))}
-              </div>
+              {items.map((item, itemIndex) => (
+                <ModuleItem
+                  key={item.id}
+                  item={item}
+                  index={itemIndex}
+                  moveItem={moveItem}
+                  onEdit={onEditItem}
+                  onDelete={onDeleteItem}
+                />
+              ))}
               <div className="add-item-container">
                 <button className="add-item-button" onClick={toggleAddMenu}>
                   <span className="add-icon">+</span> Add item
@@ -131,14 +186,14 @@ const ModuleCard = ({
                       className="add-item-option"
                       onClick={() => handleAddClick('link')}
                     >
-                      <span className="item-icon">🔗</span>
+                      <FiLink className="item-icon" />
                       Add a link
                     </button>
                     <button
                       className="add-item-option"
                       onClick={() => handleAddClick('file')}
                     >
-                      <span className="item-icon">⬆️</span>
+                      <FiUpload className="item-icon" />
                       Upload file
                     </button>
                   </div>

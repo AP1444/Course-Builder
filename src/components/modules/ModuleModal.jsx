@@ -1,7 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const ModuleModal = ({ isOpen, onClose, onSave, module = null }) => {
   const [moduleName, setModuleName] = useState(module ? module.name : '');
+
+  // Add this effect to sync with prop changes
+  useEffect(() => {
+    setModuleName(module ? module.name : '');
+  }, [module]);
 
   const handleSubmit = e => {
     e.preventDefault();

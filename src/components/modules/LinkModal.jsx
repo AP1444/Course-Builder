@@ -1,8 +1,20 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
-const LinkModal = ({ isOpen, onClose, onSave, moduleId }) => {
-  const [linkTitle, setLinkTitle] = useState('');
-  const [linkUrl, setLinkUrl] = useState('');
+const LinkModal = ({
+  isOpen,
+  onClose,
+  onSave,
+  moduleId,
+  initialTitle = '',
+  initialUrl = '',
+}) => {
+  const [linkTitle, setLinkTitle] = useState(initialTitle);
+  const [linkUrl, setLinkUrl] = useState(initialUrl);
+
+  useEffect(() => {
+    setLinkTitle(initialTitle);
+    setLinkUrl(initialUrl);
+  }, [initialTitle, initialUrl]);
 
   const handleSubmit = e => {
     e.preventDefault();

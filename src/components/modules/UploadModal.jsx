@@ -1,8 +1,20 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
-const UploadModal = ({ isOpen, onClose, onSave, moduleId }) => {
-  const [fileTitle, setFileTitle] = useState('');
+const UploadModal = ({
+  isOpen,
+  onClose,
+  onSave,
+  moduleId,
+  initialTitle = '',
+  initialFileName = '',
+}) => {
+  const [fileTitle, setFileTitle] = useState(initialTitle);
   const [selectedFile, setSelectedFile] = useState(null);
+
+  useEffect(() => {
+    setFileTitle(initialTitle);
+    setSelectedFile(null);
+  }, [initialTitle, initialFileName]);
 
   const handleFileChange = e => {
     if (e.target.files && e.target.files[0]) {
@@ -13,16 +25,14 @@ const UploadModal = ({ isOpen, onClose, onSave, moduleId }) => {
   const handleSubmit = e => {
     e.preventDefault();
 
-    // In a real app, you would upload the file to a server
-    // Here we just create a mock file entry
     onSave({
       id: Date.now().toString(),
       moduleId,
       type: 'file',
       title: fileTitle.trim(),
-      fileName: selectedFile.name,
-      fileSize: selectedFile.size,
-      fileType: selectedFile.type,
+      fileName: selectedFile ? selectedFile.name : initialFileName,
+      fileSize: selectedFile ? selectedFile.size : 0,
+      fileType: selectedFile ? selectedFile.type : '',
     });
     setFileTitle('');
     setSelectedFile(null);
@@ -69,6 +79,11 @@ const UploadModal = ({ isOpen, onClose, onSave, moduleId }) => {
                   </span>
                 </div>
               )}
+              {!selectedFile && initialFileName && (
+                <div className="selected-file">
+                  <span className="file-name">{initialFileName}</span>
+                </div>
+              )}
             </div>
           </div>
           <div className="modal-footer">
@@ -78,7 +93,9 @@ const UploadModal = ({ isOpen, onClose, onSave, moduleId }) => {
             <button
               type="submit"
               className="btn-create"
-              disabled={!fileTitle.trim() || !selectedFile}
+              disabled={
+                !fileTitle.trim() || (!selectedFile && !initialFileName)
+              }
             >
               Upload
             </button>
